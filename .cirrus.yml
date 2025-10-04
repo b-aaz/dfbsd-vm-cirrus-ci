@@ -11,3 +11,6 @@ master_task:
        pkg install -y tmux qemu-nox11 vim
        fetch https://github.com/vmactions/dragonflybsd-builder/releases/download/v0.9.8/dragonflybsd-6.4.2.qcow2.zst
        cat dragonflybsd-6.4.2.qcow2.zst | zstd -d > dfbsd.qcow2
+       tmux new-session -d
+       tmux send-keys -l qemu-system-x86_64 -drive file="dfbsd.qcow2",if=ide -display curses -m 1 -cpu 1 -net nic
+       tmux send-keys Enter
