@@ -1,0 +1,13 @@
+common: &COMMON
+    freebsd_instance:
+      cpu: 4
+      memory: 8G
+      image: freebsd-14-2-release-amd64-ufs
+master_task:
+    alias: pkgs
+    <<: *COMMON
+    qemu_setup_script:
+      - |
+       pkg install tmux qemu-nox11 vim
+       fetch https://github.com/vmactions/dragonflybsd-builder/releases/download/v0.9.8/dragonflybsd-6.4.2.qcow2.zst
+       cat dragonflybsd-6.4.2.qcow2.zst | zstd -d > dfbsd.qcow2
