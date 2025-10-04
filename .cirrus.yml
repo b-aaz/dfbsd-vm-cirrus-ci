@@ -12,5 +12,5 @@ master_task:
        fetch https://github.com/vmactions/dragonflybsd-builder/releases/download/v0.9.8/dragonflybsd-6.4.2.qcow2.zst
        cat dragonflybsd-6.4.2.qcow2.zst | zstd -d > dfbsd.qcow2
        tmux new-session -d
-       tmux send-keys -l qemu-system-x86_64 -drive file="dfbsd.qcow2",if=ide -display curses -m 1 -cpu 1 -net nic
+       tmux send-keys -l "qemu-system-x86_64 -drive file="dfbsd.qcow2",if=ide -display curses -m 1G -smp 1 -device e1000,netdev=n1,mac=52:54:98:76:54:32 -netdev user,id=net0,net=192.168.122.0/24,dhcpstart=192.168.122.50,hostfwd=tcp::10022-:22"
        tmux send-keys Enter
