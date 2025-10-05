@@ -21,11 +21,11 @@ master_task:
 
        tmux pipe-pane -O "cat >> /tmp/panefifo"
        echo Waiting for BIOS
-       cat /tmp/panefifo | fgrep -m1  'DF/FBSD' 
+       cat /tmp/panefifo | fgrep -m1 'DF/FBSD' 
+       echo Done waiting for BIOS
        tmux pipe-pane -O "cat >> /tmp/panefifo"
        # Boot the default BIOS option without waiting.
        tmux send-keys Enter
-       echo Done waiting for BIOS
 
        echo Waiting for loader
        cat /tmp/panefifo | fgrep -m1 'Booting in'  
