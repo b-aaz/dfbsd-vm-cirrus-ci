@@ -19,25 +19,25 @@ master_task:
 
        tmux pipe-pane -O "cat >> /tmp/dfbsd-log" || echo $?
        echo Waiting for BIOS || echo $?
-       (tail -f -n +1  /tmp/dfbsd-log & ) | tr '[:special:]' '\n' | tr '[:cntrl:]' '\n' | fgrep -qm1 'DF/FBSD'    || echo $?
+       (tail -f -n +1  /tmp/dfbsd-log & ) | tr -u '[:special:]' '\n' | tr -u '[:cntrl:]' '\n' | fgrep -qm1 'DF/FBSD'    || echo $?
        echo Done waiting for BIOS || echo $?
        #tmux pipe-pane -O "cat >> /tmp/dfbsd-log" || echo $?
        # Boot the default BIOS option without waiting. || echo $?
        tmux send-keys Enter || echo $?
 
        echo Waiting for loader
-       (tail -f -n +1  /tmp/dfbsd-log & ) | tr '[:special:]' '\n' | tr '[:cntrl:]' '\n' | fgrep -qm1 'Booting in'  
+       (tail -f -n +1  /tmp/dfbsd-log & ) | tr -u '[:special:]' '\n' | tr -u '[:cntrl:]' '\n' | fgrep -qm1 'Booting in'  
        #tmux pipe-pane -O "cat >> /tmp/dfbsd-log"
        # Boot loader with serial console without waiting
        tmux send-keys -l "                            "
 
-       (tail -f -n +1  /tmp/dfbsd-log & ) | tr '[:special:]' '\n' | tr '[:cntrl:]' '\n' | fgrep -qm1 'Countdown'  
+       (tail -f -n +1  /tmp/dfbsd-log & ) | tr -u '[:special:]' '\n' | tr -u '[:cntrl:]' '\n' | fgrep -qm1 'Countdown'  
        #tmux pipe-pane -O "cat >> /tmp/dfbsd-log"
 
        tmux send-keys -l "9"
        tmux send-keys Enter
 
-       (tail -f -n +1  /tmp/dfbsd-log & ) | tr '[:special:]' '\n' | tr '[:cntrl:]' '\n' | fgrep -qm1 'OK'  
+       (tail -f -n +1  /tmp/dfbsd-log & ) | tr -u '[:special:]' '\n' | tr -u '[:cntrl:]' '\n' | fgrep -qm1 'OK'  
        #tmux pipe-pane -O "cat >> /tmp/dfbsd-log"
 
        tmux send-keys -l set console=comconsole
@@ -46,7 +46,7 @@ master_task:
        tmux send-keys Enter
 
        echo Waiting for login
-       (tail -f -n +1  /tmp/dfbsd-log & ) | tr '[:special:]' '\n' | tr '[:cntrl:]' '\n' | fgrep -qm1 'login:'    
+       (tail -f -n +1  /tmp/dfbsd-log & ) | tr -u '[:special:]' '\n' | tr -u '[:cntrl:]' '\n' | fgrep -qm1 'login:'    
        #tmux pipe-pane -O "cat >> /tmp/dfbsd-log"
        # Wait for getty and login
        tmux send-keys -l "root"
