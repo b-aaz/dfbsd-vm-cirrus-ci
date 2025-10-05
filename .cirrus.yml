@@ -28,7 +28,7 @@ master_task:
        tmux send-keys Enter || echo $?
 
        echo Waiting for loader
-       fgrep -m1 'Booting in' /tmp/panefifo 
+       fgrep -qm1 'Booting in' /tmp/panefifo 
        tmux pipe-pane -O "cat >> /tmp/panefifo"
        # Boot loader with serial console without waiting
        tmux send-keys -l 9
@@ -39,7 +39,7 @@ master_task:
        tmux send-keys Enter
 
        echo Waiting for login
-       fgrep -m1 'login:' /tmp/panefifo   
+       fgrep -qm1 'login:' /tmp/panefifo   
        tmux pipe-pane -O "cat >> /tmp/panefifo"
        # Wait for getty and login
        tmux send-keys -l "root"
