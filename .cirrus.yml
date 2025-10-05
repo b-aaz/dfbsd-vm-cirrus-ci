@@ -19,13 +19,13 @@ master_task:
 
        mkfifo /tmp/panefifo
 
-       tmux pipe-pane -O "cat >> /tmp/panefifo"
-       echo Waiting for BIOS
-       cat /tmp/panefifo | fgrep -m1 'DF/FBSD' 
-       echo Done waiting for BIOS
-       tmux pipe-pane -O "cat >> /tmp/panefifo"
-       # Boot the default BIOS option without waiting.
-       tmux send-keys Enter
+       tmux pipe-pane -O "cat >> /tmp/panefifo" || echo $?
+       echo Waiting for BIOS || echo $?
+       cat /tmp/panefifo | fgrep -m1 'DF/FBSD'  || echo $?
+       echo Done waiting for BIOS || echo $?
+       tmux pipe-pane -O "cat >> /tmp/panefifo" || echo $?
+       # Boot the default BIOS option without waiting. || echo $?
+       tmux send-keys Enter || echo $?
 
        echo Waiting for loader
        cat /tmp/panefifo | fgrep -m1 'Booting in'  
