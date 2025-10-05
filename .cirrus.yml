@@ -13,7 +13,8 @@ master_task:
        cat dragonflybsd-6.4.2.qcow2.zst | zstd -d > dfbsd.qcow2
        tmux new-session -d
 
-       tmux send-keys -l "qemu-system-x86_64 -drive file="dfbsd.qcow2",if=ide -display curses -m 1G -smp 1 -device e1000,netdev=n1,mac=52:54:98:76:54:32 -netdev user,id=n1,net=192.168.122.0/24,dhcpstart=192.168.122.50,hostfwd=tcp::10022-:22"
+       tmux send-keys -l "qemu-system-x86_64 -drive file="dfbsd.qcow2",if=ide -m 1G -smp 1 -device e1000,netdev=n1,mac=52:54:98:76:54:32 -netdev user,id=n1,net=192.168.122.0/24,dhcpstart=192.168.122.50,hostfwd=tcp::10022-:22" -nographic
+
        tmux send-keys Enter
 
        tmux pipe-pane -O "cat >> /tmp/panefifo"
@@ -23,13 +24,17 @@ master_task:
        # Boot the default BIOS option without waiting.
        tmux send-keys Enter
 
-       # tmux pipe-pane -O "cat >> /tmp/panefifo"
+
        echo Waiting for loader
        tail -f -n +1 /tmp/panefifo | grep -qFm 1 'Booting in'
-       # Boot the default loader option without waiting
+       # Boot loader with serial console without waiting
+       tmux send-keys -l 9
+       tmux send-keys Enter
+       tmux send-keys -l set console=comconsole
+       tmux send-keys Enter
+       tmux send-keys -l boot
        tmux send-keys Enter
 
-       # tmux pipe-pane -O "cat >> /tmp/panefifo"
        echo Waiting for login
        tail -f -n +1 /tmp/panefifo | grep -qFm 1 'login:'
        # Wait for getty and login
