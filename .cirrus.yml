@@ -23,13 +23,13 @@ master_task:
        # Boot the default BIOS option without waiting.
        tmux send-keys Enter
 
-#       tmux pipe-pane -O "cat >> /tmp/panefifo"
+       #tmux pipe-pane -O "cat >> /tmp/panefifo"
        echo Waiting for loader
        tail -f /tmp/panefifo | grep -qFm 1 'Booting in'
        # Boot the default loader option without waiting
        tmux send-keys Enter
 
-#       tmux pipe-pane -O "cat >> /tmp/panefifo"
+       #tmux pipe-pane -O "cat >> /tmp/panefifo"
        echo Waiting for login
        tail -f /tmp/panefifo | grep -qFm 1 'login:'
        # Wait for getty and login
