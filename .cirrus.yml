@@ -31,8 +31,17 @@ master_task:
        fgrep -qm1 'Booting in' /tmp/panefifo 
        tmux pipe-pane -O "cat >> /tmp/panefifo"
        # Boot loader with serial console without waiting
+       tmux send-keys Space
+
+       fgrep -qm1 'halted' /tmp/panefifo 
+       tmux pipe-pane -O "cat >> /tmp/panefifo"
+
        tmux send-keys -l 9
        tmux send-keys Enter
+
+       fgrep -qm1 'OK' /tmp/panefifo 
+       tmux pipe-pane -O "cat >> /tmp/panefifo"
+
        tmux send-keys -l set console=comconsole
        tmux send-keys Enter
        tmux send-keys -l boot
