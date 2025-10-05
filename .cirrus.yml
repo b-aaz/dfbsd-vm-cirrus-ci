@@ -28,15 +28,15 @@ master_task:
        tmux send-keys Enter || echo $?
 
        echo Waiting for loader
-       fgrep -qm1 'Booting in' /tmp/panefifo 
+       fgrep -qm1 'Booting in 9' /tmp/panefifo 
        tmux pipe-pane -O "cat >> /tmp/panefifo"
        # Boot loader with serial console without waiting
        tmux send-keys Space
 
-       fgrep -qm1 'halted' /tmp/panefifo 
+       fgrep -qm1 'Countdown' /tmp/panefifo 
        tmux pipe-pane -O "cat >> /tmp/panefifo"
 
-       tmux send-keys -l 9
+       tmux send-keys -l "9"
        tmux send-keys Enter
 
        fgrep -qm1 'OK' /tmp/panefifo 
