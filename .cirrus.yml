@@ -17,28 +17,28 @@ master_task:
 
        tmux send-keys Enter
 
-       tmux pipe-pane -O "cat >> /tmp/panefifo" || echo $?
+       tmux pipe-pane -O "cat >> /tmp/dfbsd-log" || echo $?
        echo Waiting for BIOS || echo $?
-       fgrep -qm1 'DF/FBSD' /tmp/panefifo   || echo $?
+       (tail -f -n +1  /tmp/dfbsd-log & ) | fgrep -qm1 'DF/FBSD'    || echo $?
        echo Done waiting for BIOS || echo $?
-       tmux pipe-pane -O "cat >> /tmp/panefifo" || echo $?
+       #tmux pipe-pane -O "cat >> /tmp/dfbsd-log" || echo $?
        # Boot the default BIOS option without waiting. || echo $?
        tmux send-keys Enter || echo $?
 
        echo Waiting for loader
-       fgrep -qm1 'Booting in' /tmp/panefifo 
-       tmux pipe-pane -O "cat >> /tmp/panefifo"
+       (tail -f -n +1  /tmp/dfbsd-log & ) | fgrep -qm1 'Booting in'  
+       #tmux pipe-pane -O "cat >> /tmp/dfbsd-log"
        # Boot loader with serial console without waiting
        tmux send-keys -l "                            "
 
-       fgrep -qm1 'Countdown' /tmp/panefifo 
-       tmux pipe-pane -O "cat >> /tmp/panefifo"
+       (tail -f -n +1  /tmp/dfbsd-log & ) | fgrep -qm1 'Countdown'  
+       #tmux pipe-pane -O "cat >> /tmp/dfbsd-log"
 
        tmux send-keys -l "9"
        tmux send-keys Enter
 
-       fgrep -qm1 'OK' /tmp/panefifo 
-       tmux pipe-pane -O "cat >> /tmp/panefifo"
+       (tail -f -n +1  /tmp/dfbsd-log & ) | fgrep -qm1 'OK'  
+       #tmux pipe-pane -O "cat >> /tmp/dfbsd-log"
 
        tmux send-keys -l set console=comconsole
        tmux send-keys Enter
@@ -46,8 +46,8 @@ master_task:
        tmux send-keys Enter
 
        echo Waiting for login
-       fgrep -qm1 'login:' /tmp/panefifo   
-       tmux pipe-pane -O "cat >> /tmp/panefifo"
+       (tail -f -n +1  /tmp/dfbsd-log & ) | fgrep -qm1 'login:'    
+       #tmux pipe-pane -O "cat >> /tmp/dfbsd-log"
        # Wait for getty and login
        tmux send-keys -l "root"
        tmux send-keys Enter
