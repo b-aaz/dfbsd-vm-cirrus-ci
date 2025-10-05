@@ -22,14 +22,14 @@ master_task:
        tmux pipe-pane -O "cat >> /tmp/panefifo"
        echo Waiting for BIOS
        cat /tmp/panefifo | fgrep -m1  'DF/FBSD' 
+       tmux pipe-pane -O "cat >> /tmp/panefifo"
        # Boot the default BIOS option without waiting.
        tmux send-keys Enter
        echo Done waiting for BIOS
 
-
-       tmux pipe-pane -O "cat >> /tmp/panefifo"
        echo Waiting for loader
        cat /tmp/panefifo | fgrep -m1 'Booting in'  
+       tmux pipe-pane -O "cat >> /tmp/panefifo"
        # Boot loader with serial console without waiting
        tmux send-keys -l 9
        tmux send-keys Enter
@@ -38,9 +38,9 @@ master_task:
        tmux send-keys -l boot
        tmux send-keys Enter
 
-       tmux pipe-pane -O "cat >> /tmp/panefifo"
        echo Waiting for login
        cat /tmp/panefifo | fgrep -m1 'login:'  
+       tmux pipe-pane -O "cat >> /tmp/panefifo"
        # Wait for getty and login
        tmux send-keys -l "root"
        tmux send-keys Enter
