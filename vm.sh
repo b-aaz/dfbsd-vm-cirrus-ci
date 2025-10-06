@@ -1,7 +1,13 @@
 #!/bin/sh
 
-# Splits the string in the first argument to chars each on a line.
+set -e
+set -x
 
+# Delete and recreate ssh keys
+rm -rf ~/.ssh
+ssh-keygen -q -t ed25519 -N "" 
+
+# Splits the string in the first argument to chars each on a line.
 char_split(){
 tmp="$1"
 while [ -n "$tmp" ]
@@ -15,7 +21,6 @@ done
 
 # Sends the string in the first argument slowly one char at a time at typing
 # speeds to the tmux window.
-
 tmux_sendkeys_slow(){
 IFS=$'\n';
 for i in $(char_split "$1")
@@ -91,4 +96,14 @@ tmux send-keys Enter
 
 # Login with the root user
 tmux send-keys -l 'root'
+tmux send-keys Enter
+
+# Add the hosts ssh key to VM.
+tmux send-keys -l 'rm -rf ~/.ssh/*'
+tmux send-keys Enter
+tmux send-keys -l 'touch ~/.ssh/authorized_keys'
+tmux send-keys Enter
+tmux send-keys -l 'chmod 600 ~/.ssh/authorized_keys'
+tmux send-keys Enter
+tmux send-keys -l 'echo "'"$(cat ~/.ssh/id_ed25519.pub | tr -d "\n")"'" >>  ~/.ssh/authorized_keys'
 tmux send-keys Enter
