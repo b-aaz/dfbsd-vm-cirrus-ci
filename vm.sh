@@ -5,7 +5,7 @@ set -x
 
 # Delete and recreate ssh keys
 rm -rf ~/.ssh
-ssh-keygen -q -t ed25519 -N "" -f ~/.ssh/id_ed25519
+ssh-keygen -q -t ed25519 -N "" -f /root/.ssh/id_ed25519
 
 # Splits the string in the first argument to chars each on a line.
 char_split(){
