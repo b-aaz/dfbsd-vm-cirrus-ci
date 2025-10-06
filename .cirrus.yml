@@ -41,17 +41,17 @@ master_task:
        tmux pipe-pane -O "cat >> /tmp/dfbsd-log" 
 
        echo Waiting for BIOS
-       (tail -f -n +1  /tmp/dfbsd-log | tr -u '[:special:]' '\n' | tr -u '[:cntrl:]' '\n' & ) |  ./srch 'DF/FBSD' 
+       (tail -f -n +1  /tmp/dfbsd-log & ) |  ./srch 'DF/FBSD' 
        echo Done waiting for BIOS 
        # Boot the default BIOS option without waiting.
        tmux send-keys Enter 
 
        echo Waiting for loader
-       (tail -f -n +1  /tmp/dfbsd-log | tr -u '[:special:]' '\n' | tr -u '[:cntrl:]' '\n' & ) |  ./srch 'Booting in'
+       (tail -f -n +1  /tmp/dfbsd-log & ) |  ./srch 'Booting in'
        # Boot loader with serial console without waiting
        tmux send-keys -l "                            "
 
-       (tail -f -n +1  /tmp/dfbsd-log | tr -u '[:special:]' '\n' | tr -u '[:cntrl:]' '\n' & ) |  ./srch 'Countdown'
+       (tail -f -n +1  /tmp/dfbsd-log & ) |  ./srch 'Countdown'
 
        tmux send-keys -l "9"
        for i in $(seq 1 40)
@@ -59,7 +59,7 @@ master_task:
          tmux send-keys Enter
        done
 
-       (tail -f -n +1  /tmp/dfbsd-log | tr -u '[:special:]' '\n' | tr -u '[:cntrl:]' '\n' & ) |  ./srch 'OK'
+       (tail -f -n +1  /tmp/dfbsd-log & ) |  ./srch 'OK'
 
        tmux_sendkeys_slow 'set console=comconsole'
        sleep 1
@@ -70,7 +70,7 @@ master_task:
        tmux send-keys Enter
 
        echo Waiting for login
-       (tail -f -n +1  /tmp/dfbsd-log | tr -u '[:special:]' '\n' | tr -u '[:cntrl:]' '\n' & ) |  ./srch 'login:'
+       (tail -f -n +1  /tmp/dfbsd-log & ) |  ./srch 'login:'
        # Wait for getty and login
        tmux send-keys -l 'root'
        tmux send-keys Enter
