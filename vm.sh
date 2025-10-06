@@ -8,6 +8,15 @@ set -x
 rm -rf /root/.ssh/
 ssh-keygen -q -t ed25519 -N "" -f /root/.ssh/id_ed25519
 
+# Add the host details so that we can ssh & rsync easily.
+cat > /root/.ssh/config << EOF
+Host vm
+	HostName 127.0.0.1
+	User root
+	Port 10022
+EOF
+
+
 # Splits the string in the first argument to chars each on a line.
 char_split(){
 tmp="$1"
@@ -35,28 +44,33 @@ done
 cc srch.c -o srch
 
 # Installs the required programs.
-pkg install -y tmux qemu-nox11 vim
+pkg install -y tmux qemu-nox11 vim rclone
 
 # Download the DFBSD image.
-fetch https://github.com/vmactions/dragonflybsd-builder/releases/download/v0.9.8/dragonflybsd-6.4.2.qcow2.zst
+fetch https://github.com/vmactions/dragonflybsd-builder/releases/download/v0.9.8/dragonflybsd-6.4.2.qcow2.zst -o /tmp/dfbsd.qcow2.zstd
 
-# Unpack the DFBSD image.
-cat dragonflybsd-6.4.2.qcow2.zst | zstd -d > dfbsd.qcow2
-rm dragonflybsd-6.4.2.qcow2.zst 
+# Unpack the VM image.
+zstd --rm -d /tmp/dfbsd.qcow2.zstd -o /tmp/dfbsd.qcow2
 
 # Create a tmux session that the VM  will start in.
 tmux new-session -d
 
-# Send the VM start command
-tmux send-keys -l "qemu-system-x86_64 -drive file=dfbsd.qcow2,if=ide -m 1G -smp 1 -device e1000,netdev=n1,mac=52:54:98:76:54:32 -netdev user,id=n1,net=192.168.122.0/24,dhcpstart=192.168.122.50,hostfwd=tcp::10022-:22 -nographic"
+# Get the hosts number of CPUs.
+hncpu=$(sysctl -n hw.ncpu)
 
-# Start the VM
+# Get the hosts amount of memory in megabytes.
+hmem=$(( $(sysctl -n hw.physmem)/1024/1024 ))
+
+# Send the VM start command
+tmux send-keys -l "qemu-system-x86_64 -drive file=/tmp/dfbsd.qcow2,if=ide -m ${hmem}M -smp $hncpu -device e1000,netdev=n1,mac=52:54:98:76:54:32 -netdev user,id=n1,net=192.168.122.0/24,dhcpstart=192.168.122.50,hostfwd=tcp:127.0.0.1:10022-:22 -nographic"
+
+# Start the VM.
 tmux send-keys Enter
 
-# Store the VM console output
+# Store the VM console output.
 tmux pipe-pane -O "cat >> /tmp/vm-log" 
 
-# Waiting for BIOS to start
+# Waiting for BIOS to start.
 (tail -f -n +1  /tmp/vm-log & ) |  ./srch 'DF/FBSD' 
 
 # Boot the default BIOS option without waiting.
