@@ -99,6 +99,8 @@ tmux send-keys Enter
 tmux send-keys -l 'root'
 tmux send-keys Enter
 
+tmux send-keys -l 'unalias rm'
+tmux send-keys Enter
 # Add the hosts ssh key to VM.
 tmux send-keys -l 'rm -rf /root/.ssh/*'
 tmux send-keys Enter
