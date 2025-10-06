@@ -8,7 +8,27 @@ master_task:
     <<: *COMMON
     qemu_setup_script:
       - |
+       char-split(){
+        tmp="$1"
+        while [ -n "$tmp" ]
+        do
+         rest="${tmp#?}"
+         first="${tmp%"$rest"}"
+         echo "$first"
+         tmp="$rest"
+        done
+       }
+       tmux_sendkeys_slow(){
+        IFS=$'\n';
+        for i in $(char-split "$1")
+        do
+         tmux send-keys -l "$i"
+         sleep .01
+        done
+       }
+
        cc srch.c -o srch
+
        pkg install -y tmux qemu-nox11 vim
        fetch https://github.com/vmactions/dragonflybsd-builder/releases/download/v0.9.8/dragonflybsd-6.4.2.qcow2.zst
        cat dragonflybsd-6.4.2.qcow2.zst | zstd -d > dfbsd.qcow2
@@ -18,19 +38,20 @@ master_task:
 
        tmux send-keys Enter
 
-       tmux pipe-pane -O "cat >> /tmp/dfbsd-log" || echo $?
-       echo Waiting for BIOS || echo $?
-       (tail -f -n +1  /tmp/dfbsd-log | tr -u '[:special:]' '\n' | tr -u '[:cntrl:]' '\n' & ) |  ./srch 'DF/FBSD' || echo $?
-       echo Done waiting for BIOS || echo $?
-       # Boot the default BIOS option without waiting. || echo $?
-       tmux send-keys Enter || echo $?
+       tmux pipe-pane -O "cat >> /tmp/dfbsd-log" 
+
+       echo Waiting for BIOS
+       (tail -f -n +1  /tmp/dfbsd-log | tr -u '[:special:]' '\n' | tr -u '[:cntrl:]' '\n' & ) |  ./srch 'DF/FBSD' 
+       echo Done waiting for BIOS 
+       # Boot the default BIOS option without waiting.
+       tmux send-keys Enter 
 
        echo Waiting for loader
-       (tail -f -n +1  /tmp/dfbsd-log | tr -u '[:special:]' '\n' | tr -u '[:cntrl:]' '\n' & ) |  ./srch 'Booting in' || echo $?
+       (tail -f -n +1  /tmp/dfbsd-log | tr -u '[:special:]' '\n' | tr -u '[:cntrl:]' '\n' & ) |  ./srch 'Booting in'
        # Boot loader with serial console without waiting
        tmux send-keys -l "                            "
 
-       (tail -f -n +1  /tmp/dfbsd-log | tr -u '[:special:]' '\n' | tr -u '[:cntrl:]' '\n' & ) |  ./srch 'Countdown' || echo $?
+       (tail -f -n +1  /tmp/dfbsd-log | tr -u '[:special:]' '\n' | tr -u '[:cntrl:]' '\n' & ) |  ./srch 'Countdown'
 
        tmux send-keys -l "9"
        tmux send-keys Enter
@@ -38,16 +59,15 @@ master_task:
        tmux send-keys Enter
        tmux send-keys Enter
 
-       (tail -f -n +1  /tmp/dfbsd-log | tr -u '[:special:]' '\n' | tr -u '[:cntrl:]' '\n' & ) |  ./srch 'OK' || echo $?
+       (tail -f -n +1  /tmp/dfbsd-log | tr -u '[:special:]' '\n' | tr -u '[:cntrl:]' '\n' & ) |  ./srch 'OK'
 
-       tmux send-keys -l 'set console='
-       tmux send-keys -l 'comconsole'
+       tmux_sendkeys_slow -l 'set console=comconsole'
        tmux send-keys Enter
-       tmux send-keys -l 'boot'
+       tmux_sendkeys_slow -l 'boot'
        tmux send-keys Enter
 
        echo Waiting for login
-       (tail -f -n +1  /tmp/dfbsd-log | tr -u '[:special:]' '\n' | tr -u '[:cntrl:]' '\n' & ) |  ./srch 'login:' || echo $?
+       (tail -f -n +1  /tmp/dfbsd-log | tr -u '[:special:]' '\n' | tr -u '[:cntrl:]' '\n' & ) |  ./srch 'login:'
        # Wait for getty and login
-       tmux send-keys -l "root"
+       tmux_sendkeys_slow -l 'root'
        tmux send-keys Enter
