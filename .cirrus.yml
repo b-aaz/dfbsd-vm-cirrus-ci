@@ -62,11 +62,11 @@ master_task:
        (tail -f -n +1  /tmp/dfbsd-log | tr -u '[:special:]' '\n' | tr -u '[:cntrl:]' '\n' & ) |  ./srch 'OK'
 
        tmux_sendkeys_slow 'set console=comconsole'
-       sleep .1
+       sleep 1
        tmux send-keys Enter
-       sleep .1
+       sleep 1
        tmux_sendkeys_slow 'boot'
-       sleep .1
+       sleep 1
        tmux send-keys Enter
 
        echo Waiting for login
