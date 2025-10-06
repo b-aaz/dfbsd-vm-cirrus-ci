@@ -3,8 +3,9 @@
 set -e
 set -x
 
+
 # Delete and recreate ssh keys
-rm -rf ~/.ssh
+rm -rf /root/.ssh/
 ssh-keygen -q -t ed25519 -N "" -f /root/.ssh/id_ed25519
 
 # Splits the string in the first argument to chars each on a line.
@@ -99,11 +100,11 @@ tmux send-keys -l 'root'
 tmux send-keys Enter
 
 # Add the hosts ssh key to VM.
-tmux send-keys -l 'rm -rf ~/.ssh/*'
+tmux send-keys -l 'rm -rf /root/.ssh/*'
 tmux send-keys Enter
-tmux send-keys -l 'touch ~/.ssh/authorized_keys'
+tmux send-keys -l 'touch /root/.ssh/authorized_keys'
 tmux send-keys Enter
-tmux send-keys -l 'chmod 600 ~/.ssh/authorized_keys'
+tmux send-keys -l 'chmod 600 /root/.ssh/authorized_keys'
 tmux send-keys Enter
-tmux send-keys -l 'echo "'"$(cat ~/.ssh/id_ed25519.pub | tr -d "\n")"'" >>  ~/.ssh/authorized_keys'
+tmux send-keys -l 'echo "'"$(cat /root/.ssh/id_ed25519.pub | tr -d "\n")"'" >>  /root/.ssh/authorized_keys'
 tmux send-keys Enter
