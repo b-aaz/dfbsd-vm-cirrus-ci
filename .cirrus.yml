@@ -37,11 +37,14 @@ master_task:
 
        tmux send-keys -l "9"
        tmux send-keys Enter
+       tmux send-keys Enter
+       tmux send-keys Enter
+       tmux send-keys Enter
 
        (tail -f -n +1  /tmp/dfbsd-log | tr -u '[:special:]' '\n' | tr -u '[:cntrl:]' '\n' & ) |  ./srch 'OK' || echo $?
        #tmux pipe-pane -O "cat >> /tmp/dfbsd-log"
 
-       tmux send-keys -l set console=comconsole
+       tmux send-keys -l "set console=comconsole<
        tmux send-keys Enter
        tmux send-keys -l boot
        tmux send-keys Enter
