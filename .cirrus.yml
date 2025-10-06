@@ -8,7 +8,7 @@ master_task:
     <<: *COMMON
     qemu_setup_script:
       - |
-       char-split(){
+       char_split(){
         tmp="$1"
         while [ -n "$tmp" ]
         do
@@ -20,7 +20,7 @@ master_task:
        }
        tmux_sendkeys_slow(){
         IFS=$'\n';
-        for i in $(char-split "$1")
+        for i in $(char_split "$1")
         do
          tmux send-keys -l "$i"
          sleep .01
@@ -61,13 +61,13 @@ master_task:
 
        (tail -f -n +1  /tmp/dfbsd-log | tr -u '[:special:]' '\n' | tr -u '[:cntrl:]' '\n' & ) |  ./srch 'OK'
 
-       tmux_sendkeys_slow -l 'set console=comconsole'
+       tmux_sendkeys_slow 'set console=comconsole'
        tmux send-keys Enter
-       tmux_sendkeys_slow -l 'boot'
+       tmux_sendkeys_slow 'boot'
        tmux send-keys Enter
 
        echo Waiting for login
        (tail -f -n +1  /tmp/dfbsd-log | tr -u '[:special:]' '\n' | tr -u '[:cntrl:]' '\n' & ) |  ./srch 'login:'
        # Wait for getty and login
-       tmux_sendkeys_slow -l 'root'
+       tmux_sendkeys_slow 'root'
        tmux send-keys Enter
