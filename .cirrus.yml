@@ -22,18 +22,15 @@ master_task:
        echo Waiting for BIOS || echo $?
        (tail -f -n +1  /tmp/dfbsd-log | tr -u '[:special:]' '\n' | tr -u '[:cntrl:]' '\n' & ) |  ./srch 'DF/FBSD' || echo $?
        echo Done waiting for BIOS || echo $?
-       #tmux pipe-pane -O "cat >> /tmp/dfbsd-log" || echo $?
        # Boot the default BIOS option without waiting. || echo $?
        tmux send-keys Enter || echo $?
 
        echo Waiting for loader
        (tail -f -n +1  /tmp/dfbsd-log | tr -u '[:special:]' '\n' | tr -u '[:cntrl:]' '\n' & ) |  ./srch 'Booting in' || echo $?
-       #tmux pipe-pane -O "cat >> /tmp/dfbsd-log"
        # Boot loader with serial console without waiting
        tmux send-keys -l "                            "
 
        (tail -f -n +1  /tmp/dfbsd-log | tr -u '[:special:]' '\n' | tr -u '[:cntrl:]' '\n' & ) |  ./srch 'Countdown' || echo $?
-       #tmux pipe-pane -O "cat >> /tmp/dfbsd-log"
 
        tmux send-keys -l "9"
        tmux send-keys Enter
@@ -42,16 +39,15 @@ master_task:
        tmux send-keys Enter
 
        (tail -f -n +1  /tmp/dfbsd-log | tr -u '[:special:]' '\n' | tr -u '[:cntrl:]' '\n' & ) |  ./srch 'OK' || echo $?
-       #tmux pipe-pane -O "cat >> /tmp/dfbsd-log"
 
-       tmux send-keys -l "set console=comconsole"
+       tmux send-keys -l 'set console='
+       tmux send-keys -l 'comconsole'
        tmux send-keys Enter
-       tmux send-keys -l boot
+       tmux send-keys -l 'boot'
        tmux send-keys Enter
 
        echo Waiting for login
        (tail -f -n +1  /tmp/dfbsd-log | tr -u '[:special:]' '\n' | tr -u '[:cntrl:]' '\n' & ) |  ./srch 'login:' || echo $?
-       #tmux pipe-pane -O "cat >> /tmp/dfbsd-log"
        # Wait for getty and login
        tmux send-keys -l "root"
        tmux send-keys Enter
