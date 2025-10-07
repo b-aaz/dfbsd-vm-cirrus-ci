@@ -38,8 +38,8 @@ Host vm
 	Port 22
 EOF
 
-# Compile the search binary.
-cc srch.c -o srch
+# Compile and install the search binary.
+cc ./.ci/srch.c -o /usr/local/bin/srch
 
 # Installs the required programs.
 pkg install -y tmux qemu-nox11 sshfs rsync
@@ -69,26 +69,26 @@ tmux send-keys Enter
 tmux pipe-pane -O "cat >> /tmp/vm-log" 
 
 # Waiting for BIOS to start.
-(tail -f -n +1  /tmp/vm-log & ) |  ./srch 'DF/FBSD' 
+(tail -f -n +1  /tmp/vm-log & ) | srch 'DF/FBSD' 
 
 # Boot the default BIOS option without waiting.
 tmux send-keys Enter 
 
 # Waiting for loader to start 
-(tail -f -n +1  /tmp/vm-log & ) |  ./srch 'Booting in'
+(tail -f -n +1  /tmp/vm-log & ) | srch 'Booting in'
 
 # Stop the loader boot timer
 tmux send-keys -l " "
 
 # Wait for it to stop
-(tail -f -n +1  /tmp/vm-log & ) |  ./srch 'Countdown'
+(tail -f -n +1  /tmp/vm-log & ) | srch 'Countdown'
 
 # Get into the loader prompt
 tmux send-keys -l "9"
 tmux send-keys Enter
 
 # Wait for the prompt to appear
-(tail -f -n +1  /tmp/vm-log & ) |  ./srch 'OK'
+(tail -f -n +1  /tmp/vm-log & ) | srch 'OK'
 
 # The loader prompt will bug out when we send the keys too fast. So we need to
 # send the keys and normal typing speeds.
@@ -105,7 +105,7 @@ sleep 1
 tmux send-keys Enter
 
 # Wait for getty to appear and login
-(tail -f -n +1  /tmp/vm-log & ) |  ./srch 'login:'
+(tail -f -n +1  /tmp/vm-log & ) | srch 'login:'
 
 # Login with the root user
 tmux send-keys -l 'root'
