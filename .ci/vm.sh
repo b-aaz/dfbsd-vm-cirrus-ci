@@ -147,6 +147,9 @@ nat pass on $ext_if from $int_if:network to any -> ($ext_if)
 EOF
 service pf onestart
 
+# Add the VM to the known hosts.
+ssh-keyscan 10.0.0.1 > ~/.ssh/known_hosts
+
 # Mount the VMs root in host.
 kldload fusefs
 mkdir /mnt/vm
