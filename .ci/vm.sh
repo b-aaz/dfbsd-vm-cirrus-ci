@@ -148,7 +148,7 @@ EOF
 service pf onestart
 
 # Add the VM to the known hosts.
-ssh-keyscan 10.0.0.1 > /root/.ssh/known_hosts
+ssh-keyscan vm.vmrun.local > /root/.ssh/known_hosts
 
 # Mount the VMs root in host.
 kldload fusefs
@@ -159,20 +159,28 @@ sshfs vm:/ /mnt/vm
 
 # Setting up NFS on the VM.
 ssh vm "echo '/' > /etc/exports"
-ssh vm "service mountd  onestart"
-ssh vm "service rpcbind onestart"
-ssh vm "service nfsd    onestart"
+ssh vm "service nfsd onestart"
 
 # Mount the VMs NFS root on the host.
 mkdir /mnt/vm2
-echo starting mount
 mount 10.0.0.1:/ /mnt/vm2
+
+# Add hostnames for the VM and the host.
+# (For fixing a NFS bug and also ascetic reasons.)
+
+# VM.
+ssh vm "echo '10.0.0.1 vm.vmrun.local'   >> /etc/hosts"
+ssh vm "echo '10.0.0.2 host.vmrun.local' >> /etc/hosts"
+
+# Host.
+echo '10.0.0.1 vm.vmrun.local'   >> /etc/hosts
+echo '10.0.0.2 host.vmrun.local' >> /etc/hosts
 
 # Setting up NFS on the host.
 mkdir /tmp/vmshare
-echo "/tmp/vmshare" > /etc/exports
+echo "/tmp/vmshare vm.vmrun.local" > /etc/exports
 service nfsd onestart
 
 # Mount the shared folder in the VM.
 mkdir /mnt/vmshare
-ssh vm "mount_nfs 10.0.0.2:/tmp/vmshare /mnt/vmshare"
+ssh vm "mount_nfs host.vmrun.local:/tmp/vmshare /mnt/vmshare"
