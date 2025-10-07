@@ -59,7 +59,7 @@ hncpu=$(sysctl -n hw.ncpu)
 # Get the hosts amount of memory in megabytes.
 hmem=$(( $(sysctl -n hw.physmem)/1024/1024 ))
 
-# Send the VM start command
+# Send the VM start command.
 tmux send-keys -l "qemu-system-x86_64 -drive file=/tmp/dfbsd.qcow2,if=ide -m ${hmem}M -smp $hncpu -device e1000,netdev=n1 -netdev tap,id=n1 -nographic"
 
 # Start the VM.
@@ -74,40 +74,40 @@ tmux pipe-pane -O "cat >> /tmp/vm-log"
 # Boot the default BIOS option without waiting.
 tmux send-keys Enter 
 
-# Waiting for loader to start 
+# Waiting for loader to start.
 (tail -f -n +1  /tmp/vm-log & ) | srch 'Booting in'
 
-# Stop the loader boot timer
+# Stop the loader boot timer.
 tmux send-keys -l " "
 
-# Wait for it to stop
+# Wait for it to stop.
 (tail -f -n +1  /tmp/vm-log & ) | srch 'Countdown'
 
-# Get into the loader prompt
+# Get into the loader prompt.
 tmux send-keys -l "9"
 tmux send-keys Enter
 
-# Wait for the prompt to appear
+# Wait for the prompt to appear.
 (tail -f -n +1  /tmp/vm-log & ) | srch 'OK'
 
 # The loader prompt will bug out when we send the keys too fast. So we need to
 # send the keys and normal typing speeds.
 
-# Enable the serial console
+# Enable the serial console.
 tmux_sendkeys_slow 'set console=comconsole'
 sleep 1
 tmux send-keys Enter
 sleep 1
 
-# Boot the kernel
+# Boot the kernel.
 tmux_sendkeys_slow 'boot'
 sleep 1
 tmux send-keys Enter
 
-# Wait for getty to appear and login
+# Wait for getty to appear and login.
 (tail -f -n +1  /tmp/vm-log & ) | srch 'login:'
 
-# Login with the root user
+# Login with the root user.
 tmux send-keys -l 'root'
 tmux send-keys Enter
 
@@ -123,9 +123,9 @@ tmux send-keys Enter
 tmux send-keys -l 'echo "'"$(cat /root/.ssh/id_ed25519.pub | tr -d "\n")"'" >>  /root/.ssh/authorized_keys'
 tmux send-keys Enter
 
-# Setting up the networking 
+# Setting up the networking.
 
-# Setup the guest network
+# Setup the guest network.
 tmux send-keys -l 'pkill dhclient'
 tmux send-keys Enter
 tmux send-keys -l 'ifconfig em0 inet 10.0.0.1/24'
@@ -136,10 +136,10 @@ tmux send-keys Enter
 # Set the VM interface ip address.
 ifconfig tap0 inet 10.0.0.2/24
 
-# Enable gateway
+# Enable gateway.
 sysctl net.inet.ip.forwarding=1
 
-# Enable PF NAT
+# Enable PF NAT.
 cat > /etc/pf.conf << 'EOF'
 ext_if="vtnet0"
 int_if="tap0"
@@ -147,6 +147,26 @@ nat pass on $ext_if from $int_if:network to any -> ($ext_if)
 EOF
 service pf onestart
 
-# Mount the VMs root in host
+# Mount the VMs root in host.
 kldload fusefs
+mkdir /mnt/vm
 sshfs vm:/ /mnt/vm
+
+# We now have ssh and will use it for the further commands.
+
+# Setting up NFS on the VM.
+ssh vm "echo '/ 10.0.0.2' > /etc/exports"
+ssh vm "service nfsd onestart"
+
+# Mount the VMs NFS root on the host.
+mkdir /mnt/vm2
+mount 10.0.0.1:/ /mnt/vm2
+
+# Setting up NFS on the host.
+mkdir /tmp/vmshare
+echo "/tmp/vmshare 10.0.0.1" > /etc/exports
+service nfsd onestart
+
+# Mount the shared folder in the VM.
+mkdir /mnt/vmshare
+ssh vm "mount_nfs 10.0.0.2:/tmp/vmshare /mnt/vmshare"
