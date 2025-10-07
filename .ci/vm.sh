@@ -158,16 +158,19 @@ sshfs vm:/ /mnt/vm
 # We now have ssh and will use it for the further commands.
 
 # Setting up NFS on the VM.
-ssh vm "echo '/ 10.0.0.2' > /etc/exports"
-ssh vm "service nfsd onestart"
+ssh vm "echo '/' > /etc/exports"
+ssh vm "service mountd  onestart"
+ssh vm "service rpcbind onestart"
+ssh vm "service nfsd    onestart"
 
 # Mount the VMs NFS root on the host.
 mkdir /mnt/vm2
+echo starting mount
 mount 10.0.0.1:/ /mnt/vm2
 
 # Setting up NFS on the host.
 mkdir /tmp/vmshare
-echo "/tmp/vmshare 10.0.0.1" > /etc/exports
+echo "/tmp/vmshare" > /etc/exports
 service nfsd onestart
 
 # Mount the shared folder in the VM.
