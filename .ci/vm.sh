@@ -148,7 +148,7 @@ EOF
 service pf onestart
 
 # Add the VM to the known hosts.
-ssh-keyscan vm.vmrun.local > /root/.ssh/known_hosts
+ssh-keyscan 10.0.0.1 > /root/.ssh/known_hosts
 
 # Mount the VMs root in host.
 kldload fusefs
