@@ -3,20 +3,6 @@
 set -e
 set -x
 
-
-# Delete and recreate ssh keys
-rm -rf /root/.ssh/
-ssh-keygen -q -t ed25519 -N "" -f /root/.ssh/id_ed25519
-
-# Add the host details so that we can ssh & rsync easily.
-cat > /root/.ssh/config << EOF
-Host vm
-	HostName 127.0.0.1
-	User root
-	Port 10022
-EOF
-
-
 # Splits the string in the first argument to chars each on a line.
 char_split(){
 tmp="$1"
@@ -40,11 +26,23 @@ do
 done
 }
 
+# Delete and recreate ssh keys.
+rm -rf /root/.ssh/
+ssh-keygen -q -t ed25519 -N "" -f /root/.ssh/id_ed25519
+
+# Add the host details so that we can ssh and rsync easily.
+cat > /root/.ssh/config << EOF
+Host vm
+	HostName 10.0.0.1
+	User root
+	Port 22
+EOF
+
 # Compile the search binary.
 cc srch.c -o srch
 
 # Installs the required programs.
-pkg install -y tmux qemu-nox11 vim rclone
+pkg install -y tmux qemu-nox11 sshfs rsync
 
 # Download the DFBSD image.
 fetch https://github.com/vmactions/dragonflybsd-builder/releases/download/v0.9.8/dragonflybsd-6.4.2.qcow2.zst -o /tmp/dfbsd.qcow2.zstd
@@ -62,7 +60,7 @@ hncpu=$(sysctl -n hw.ncpu)
 hmem=$(( $(sysctl -n hw.physmem)/1024/1024 ))
 
 # Send the VM start command
-tmux send-keys -l "qemu-system-x86_64 -drive file=/tmp/dfbsd.qcow2,if=ide -m ${hmem}M -smp $hncpu -device e1000,netdev=n1,mac=52:54:98:76:54:32 -netdev user,id=n1,net=192.168.122.0/24,dhcpstart=192.168.122.50,hostfwd=tcp:127.0.0.1:10022-:22 -nographic"
+tmux send-keys -l "qemu-system-x86_64 -drive file=/tmp/dfbsd.qcow2,if=ide -m ${hmem}M -smp $hncpu -device e1000,netdev=n1 -netdev tap,id=n1 -nographic"
 
 # Start the VM.
 tmux send-keys Enter
@@ -124,3 +122,31 @@ tmux send-keys -l 'chmod 600 /root/.ssh/authorized_keys'
 tmux send-keys Enter
 tmux send-keys -l 'echo "'"$(cat /root/.ssh/id_ed25519.pub | tr -d "\n")"'" >>  /root/.ssh/authorized_keys'
 tmux send-keys Enter
+
+# Setting up the networking 
+
+# Setup the guest network
+tmux send-keys -l 'pkill dhclient'
+tmux send-keys Enter
+tmux send-keys -l 'ifconfig em0 inet 10.0.0.1/24'
+tmux send-keys Enter
+tmux send-keys -l 'route add default 10.0.0.2'
+tmux send-keys Enter
+
+# Set the VM interface ip address.
+ifconfig tap0 inet 10.0.0.2/24
+
+# Enable gateway
+sysctl net.inet.ip.forwarding=1
+
+# Enable PF NAT
+cat > /etc/pf.conf << 'EOF'
+ext_if="vtnet0"
+int_if="tap0"
+nat pass on $ext_if from $int_if:network to any -> ($ext_if)
+EOF
+service pf onestart
+
+# Mount the VMs root in host
+kldload fusefs
+sshfs vm:/ /mnt/vm

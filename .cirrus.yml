@@ -1,11 +1,9 @@
-common: &COMMON
+master_task:
+    alias: vm
     freebsd_instance:
       cpu: 4
       memory: 8G
       image: freebsd-14-2-release-amd64-ufs
-master_task:
-    alias: pkgs
-    <<: *COMMON
-    qemu_setup_script:
+    vm_setup_script:
       - |
-       ./vm.sh
+       ./.ci/vm.sh
