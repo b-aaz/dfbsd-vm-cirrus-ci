@@ -42,7 +42,7 @@ EOF
 cc ./.ci/srch.c -o /usr/local/bin/srch
 
 # Installs the required programs.
-pkg install -y tmux qemu-nox11 sshfs rsync
+pkg install -y tmux qemu-nox11 fusefs-sshfs rsync
 
 # Download the DFBSD image.
 fetch https://github.com/vmactions/dragonflybsd-builder/releases/download/v0.9.8/dragonflybsd-6.4.2.qcow2.zst -o /tmp/dfbsd.qcow2.zstd
