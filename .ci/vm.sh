@@ -155,6 +155,8 @@ kldload fusefs
 mkdir /mnt/vm
 sshfs vm:/ /mnt/vm
 
+# We now have ssh and will use it for the further commands.
+
 # Add hostnames for the VM and the host.
 # (For fixing a NFS bug and also ascetic reasons.)
 
@@ -166,7 +168,78 @@ ssh vm "echo '10.0.0.2 host.vmrun.local' >> /etc/hosts"
 echo '10.0.0.1 vm.vmrun.local'   >> /etc/hosts
 echo '10.0.0.2 host.vmrun.local' >> /etc/hosts
 
-# We now have ssh and will use it for the further commands.
+# Set the VM's nameserver.
+ssh vm "echo '1.1.1.1' > /etc/resolv.conf" 
 
-# Install SAMBA on the VM.
+# Setup SAMBA on the VM.
+ssh vm 'cat > /usr/local/etc/smb4.conf' << 'EOF'
+[global]
+server max procotol = NT1
+server max procotol = NT1
+client min procotol = NT1
+client min procotol = NT1
+
+netbios name = VM
+
+guest account = root
+map to guest = bad user
+
+interfaces = em0 lo0
+bind interfaces only = yes
+
+server role = standalone
+
+[vmroot]
+path = /
+guest ok = yes
+guest only = yes
+force user = root
+writeable = yes
+printable = no
+EOF
+
+# Install SAMBA on the VM too.
 ssh vm "pkg install -y samba416"
+
+# Create the host<->VM share folder on host
+mkdir /tmp/share
+
+# Setup SAMBA on the host.
+cat > /usr/local/etc/smb4.conf << 'EOF'
+[global]
+server max procotol = NT1
+server max procotol = NT1
+client min procotol = NT1
+client min procotol = NT1
+
+netbios name = HOST
+
+guest account = root
+map to guest = bad user
+
+interfaces = tap0 lo0
+bind interfaces only = yes
+
+server role = standalone
+
+[hostshare]
+path = /tmp/share
+guest ok = yes
+guest only = yes
+force user = root
+writeable = yes
+printable = no
+EOF
+
+# Start SAMBA on the VM.
+ssh vm 'service samba_server onestart'
+# Start SAMBA on the host.
+service samba_server onestart
+
+# Mount the SAMBA host share on the VM.
+mkdir /mnt/share
+ssh vm 'mount_smbfs -N //HOST/hostshare /mnt/share'
+
+# Mount the SAMBA VM root share on the HOST.
+mkdir /mnt/vm
+mount_smbfs -N //VM/vmroot /mnt/vm
