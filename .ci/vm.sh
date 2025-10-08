@@ -42,7 +42,7 @@ EOF
 cc ./.ci/srch.c -o /usr/local/bin/srch
 
 # Installs the required programs.
-pkg install -y tmux qemu-nox11 fusefs-sshfs rsync
+pkg install -y tmux qemu-nox11 fusefs-sshfs rsync samba420
 
 # Download the DFBSD image.
 fetch https://github.com/vmactions/dragonflybsd-builder/releases/download/v0.9.8/dragonflybsd-6.4.2.qcow2.zst -o /tmp/dfbsd.qcow2.zstd
@@ -155,16 +155,6 @@ kldload fusefs
 mkdir /mnt/vm
 sshfs vm:/ /mnt/vm
 
-# We now have ssh and will use it for the further commands.
-
-# Setting up NFS on the VM.
-ssh vm "echo '/' > /etc/exports"
-ssh vm "service nfsd onestart"
-
-# Mount the VMs NFS root on the host.
-mkdir /mnt/vm2
-mount 10.0.0.1:/ /mnt/vm2
-
 # Add hostnames for the VM and the host.
 # (For fixing a NFS bug and also ascetic reasons.)
 
@@ -176,11 +166,7 @@ ssh vm "echo '10.0.0.2 host.vmrun.local' >> /etc/hosts"
 echo '10.0.0.1 vm.vmrun.local'   >> /etc/hosts
 echo '10.0.0.2 host.vmrun.local' >> /etc/hosts
 
-# Setting up NFS on the host.
-mkdir /tmp/vmshare
-echo "/tmp/vmshare vm.vmrun.local" > /etc/exports
-service nfsd onestart
+# We now have ssh and will use it for the further commands.
 
-# Mount the shared folder in the VM.
-mkdir /mnt/vmshare
-ssh vm "mount_nfs host.vmrun.local:/tmp/vmshare /mnt/vmshare"
+# Install SAMBA on the VM.
+ssh vm "pkg install -y samba416"
