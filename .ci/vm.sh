@@ -33,9 +33,9 @@ ssh-keygen -q -t ed25519 -N "" -f /root/.ssh/id_ed25519
 # Add the host details so that we can ssh and rsync easily.
 cat > /root/.ssh/config << EOF
 Host vm
-	HostName 10.0.0.1
+	HostName 127.0.0.1
 	User root
-	Port 22
+	Port 10022
 EOF
 
 # Compile and install the search binary.
@@ -60,7 +60,7 @@ hncpu=$(sysctl -n hw.ncpu)
 hmem=$(( $(sysctl -n hw.physmem)/1024/1024 ))
 
 # Send the VM start command.
-tmux send-keys -l "qemu-system-x86_64 -drive file=/tmp/dfbsd.qcow2,if=ide -m ${hmem}M -smp $hncpu -device e1000,netdev=n1 -netdev tap,id=n1 -nographic"
+tmux send-keys -l "qemu-system-x86_64 -drive file=/tmp/dfbsd.qcow2,if=ide -m ${hmem}M -smp $hncpu -device e1000,netdev=n1 -netdev user,id=n1,hostfwd=tcp:127.0.0.1:10022-:22 -nographic"
 
 # Start the VM.
 tmux send-keys Enter
@@ -123,33 +123,6 @@ tmux send-keys Enter
 tmux send-keys -l 'echo "'"$(cat /root/.ssh/id_ed25519.pub | tr -d "\n")"'" >>  /root/.ssh/authorized_keys'
 tmux send-keys Enter
 
-# Setting up the networking.
-
-# Setup the guest network.
-tmux send-keys -l 'pkill dhclient'
-tmux send-keys Enter
-tmux send-keys -l 'ifconfig em0 inet 10.0.0.1/24'
-tmux send-keys Enter
-tmux send-keys -l 'route add default 10.0.0.2'
-tmux send-keys Enter
-
-# Set the VM interface ip address.
-ifconfig tap0 inet 10.0.0.2/24
-
-# Enable gateway.
-sysctl net.inet.ip.forwarding=1
-
-# Enable PF NAT.
-cat > /etc/pf.conf << 'EOF'
-ext_if="vtnet0"
-int_if="tap0"
-nat pass on $ext_if from $int_if:network to any -> ($ext_if)
-EOF
-service pf onestart
-
-# Add the VM to the known hosts.
-ssh-keyscan 10.0.0.1 > /root/.ssh/known_hosts
-
 # Mount the VMs root in host.
 kldload fusefs
 mkdir /mnt/vm
@@ -157,46 +130,8 @@ sshfs vm:/ /mnt/vm
 
 # We now have ssh and will use it for the further commands.
 
-# Add hostnames for the VM and the host.
-# (For fixing a NFS bug and also ascetic reasons.)
-
-# VM.
-ssh vm "echo '10.0.0.1 vm.vmrun.local'   >> /etc/hosts"
-ssh vm "echo '10.0.0.2 host.vmrun.local' >> /etc/hosts"
-
-# Host.
-echo '10.0.0.1 vm.vmrun.local'   >> /etc/hosts
-echo '10.0.0.2 host.vmrun.local' >> /etc/hosts
-
 # Set the VM's nameserver.
 ssh vm "echo 'nameserver 1.1.1.1' > /etc/resolv.conf" 
-
-# Setup SAMBA on the VM.
-ssh vm 'cat > /usr/local/etc/smb4.conf' << 'EOF'
-[global]
-server max protocol = NT1
-server min protocol = NT1
-client max protocol = NT1
-client min protocol = NT1
-
-netbios name = VM
-
-guest account = root
-map to guest = bad user
-
-interfaces = 10.0.0.0/24 127.0.0.0/8
-bind interfaces only = yes
-
-server role = standalone
-
-[vmroot]
-path = /
-guest ok = yes
-guest only = yes
-force user = root
-writeable = yes
-printable = no
-EOF
 
 # Create the host<->VM share folder on host
 mkdir /tmp/share
@@ -214,9 +149,6 @@ netbios name = HOST
 guest account = root
 map to guest = bad user
 
-interfaces = 10.0.0.0/24 127.0.0.0/8
-bind interfaces only = yes
-
 server role = standalone
 
 [hostshare]
@@ -232,20 +164,6 @@ EOF
 service samba_server onestart
 
 # Mount the SAMBA host share on the VM.
+hostip=$(ifconfig vtnet0 inet | grep inet | cut -d' ' -f 2)
 ssh vm 'mkdir /mnt/share'
-ssh vm 'mount_smbfs -N //HOST/hostshare /mnt/share'
-
-
-
-
-# Install SAMBA on the VM too.
-ssh vm "pkg install -y samba416"
-
-# Start SAMBA on the VM.
-ssh vm 'service samba_server onestart'
-
-# Mount the SAMBA VM root share on the host.
-mkdir /mnt/vm
-mount_smbfs -N //VM/vmroot /mnt/vm
-
-
+ssh vm "mount_smbfs -N -I ${hostip} //HOST/hostshare /mnt/share"
