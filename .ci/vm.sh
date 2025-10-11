@@ -166,3 +166,6 @@ hostip=$(ifconfig vtnet0 inet | grep inet | cut -d' ' -f 2)
 ssh vm 'mkdir /mnt/share'
 ssh vm "mount_smbfs -N -I ${hostip} //HOST/hostshare /mnt/share"
 
+kldload fusefs
+mkdir /mnt/vm
+sshfs -o reconnect -o delay_connect vm:/ /mnt/vm
