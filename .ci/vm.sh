@@ -166,7 +166,3 @@ hostip=$(ifconfig vtnet0 inet | grep inet | cut -d' ' -f 2)
 ssh vm 'mkdir /mnt/share'
 ssh vm "mount_smbfs -N -I ${hostip} //HOST/hostshare /mnt/share"
 
-# Mount the VMs root in host.
-kldload fusefs
-mkdir /mnt/vm
-sshfs vm:/ /mnt/vm

@@ -7,3 +7,6 @@ master_task:
     vm_setup_script:
       - |
        ./.ci/vm.sh
+       kldload fusefs
+       mkdir /mnt/vm
+       sshfs vm:/ /mnt/vm
