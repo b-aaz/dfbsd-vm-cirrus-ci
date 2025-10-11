@@ -126,11 +126,6 @@ tmux send-keys Enter
 # Add the VM to the known hosts.
 ssh-keyscan -p 10022 127.0.0.1 > /root/.ssh/known_hosts
 
-# Mount the VMs root in host.
-kldload fusefs
-mkdir /mnt/vm
-sshfs vm:/ /mnt/vm
-
 # We now have ssh and will use it for the further commands.
 
 # Set the VM's nameserver.
@@ -170,3 +165,8 @@ service samba_server onestart
 hostip=$(ifconfig vtnet0 inet | grep inet | cut -d' ' -f 2)
 ssh vm 'mkdir /mnt/share'
 ssh vm "mount_smbfs -N -I ${hostip} //HOST/hostshare /mnt/share"
+
+# Mount the VMs root in host.
+kldload fusefs
+mkdir /mnt/vm
+sshfs vm:/ /mnt/vm
