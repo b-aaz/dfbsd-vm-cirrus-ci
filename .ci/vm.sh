@@ -38,6 +38,9 @@ Host vm
 	Port 10022
 EOF
 
+# Add the VM to the known hosts.
+ssh-keyscan vm > /root/.ssh/known_hosts
+
 # Compile and install the search binary.
 cc ./.ci/srch.c -o /usr/local/bin/srch
 
