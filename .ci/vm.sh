@@ -39,7 +39,7 @@ Host vm
 EOF
 
 # Add the VM to the known hosts.
-ssh-keyscan 127.0.0.1 -p 10022 > /root/.ssh/known_hosts
+ssh-keyscan -p 10022 127.0.0.1 > /root/.ssh/known_hosts
 
 # Compile and install the search binary.
 cc ./.ci/srch.c -o /usr/local/bin/srch
