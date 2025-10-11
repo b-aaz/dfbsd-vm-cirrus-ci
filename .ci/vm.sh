@@ -38,9 +38,6 @@ Host vm
 	Port 10022
 EOF
 
-# Add the VM to the known hosts.
-ssh-keyscan -p 10022 127.0.0.1 > /root/.ssh/known_hosts
-
 # Compile and install the search binary.
 cc ./.ci/srch.c -o /usr/local/bin/srch
 
@@ -125,6 +122,9 @@ tmux send-keys -l 'chmod 600 /root/.ssh/authorized_keys'
 tmux send-keys Enter
 tmux send-keys -l 'echo "'"$(cat /root/.ssh/id_ed25519.pub | tr -d "\n")"'" >>  /root/.ssh/authorized_keys'
 tmux send-keys Enter
+
+# Add the VM to the known hosts.
+ssh-keyscan -p 10022 127.0.0.1 > /root/.ssh/known_hosts
 
 # Mount the VMs root in host.
 kldload fusefs
