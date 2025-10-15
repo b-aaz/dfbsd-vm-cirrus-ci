@@ -9,4 +9,4 @@ master_task:
       nested_virtualization: true
     vm_setup_script:
       - |
-       ./.ci/vm.sh
+       dash ./.ci/vm.sh

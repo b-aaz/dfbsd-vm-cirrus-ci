@@ -149,7 +149,7 @@ ssh vm 'service rsyncd onestart'
 
 # Setup the rsync server on the host
 mkdir /tmp/share
-cat >> /etc/rsync/rsyncd.conf << 'EOF'
+cat >> /etc/rsyncd.conf << 'EOF'
 [hostshare]
 path = /tmp/share
 comment = host share
