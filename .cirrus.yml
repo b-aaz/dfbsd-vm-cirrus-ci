@@ -1,9 +1,12 @@
 master_task:
     alias: vm
-    freebsd_instance:
+    compute_engine_instance:
+      image_project: cirrus-images
+      image: family/docker-kvm
+      platform: linux
       cpu: 4
-      memory: 8G
-      image: freebsd-14-2-release-amd64-ufs
+      memory: 16G
+      nested_virtualization: true
     vm_setup_script:
       - |
        ./.ci/vm.sh
