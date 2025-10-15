@@ -42,10 +42,10 @@ EOF
 cc ./.ci/srch.c -o /usr/local/bin/srch
 
 # Installs the required programs.
-pkg install -y tmux qemu-nox11 fusefs-sshfs rsync samba420
+apt -y install sshfs net-tools
 
 # Download the DFBSD image.
-fetch https://github.com/vmactions/dragonflybsd-builder/releases/download/v0.9.8/dragonflybsd-6.4.2.qcow2.zst -o /tmp/dfbsd.qcow2.zstd
+wget https://github.com/vmactions/dragonflybsd-builder/releases/download/v0.9.8/dragonflybsd-6.4.2.qcow2.zst -O /tmp/dfbsd.qcow2.zstd
 
 # Unpack the VM image.
 zstd --rm -d /tmp/dfbsd.qcow2.zstd -o /tmp/dfbsd.qcow2
@@ -54,13 +54,13 @@ zstd --rm -d /tmp/dfbsd.qcow2.zstd -o /tmp/dfbsd.qcow2
 tmux new-session -d
 
 # Get the hosts number of CPUs.
-hncpu=$(sysctl -n hw.ncpu)
+hncpu=$(getconf _NPROCESSORS_ONLN)
 
 # Get the hosts amount of memory in megabytes.
-hmem=$(( $(sysctl -n hw.physmem)/1024/1024 ))
+#hmem=$(( $(sysctl -n hw.physmem)/1024/1024 ))
 
 # Send the VM start command.
-tmux send-keys -l "qemu-system-x86_64 -drive file=/tmp/dfbsd.qcow2,if=ide -m ${hmem}M -smp $hncpu -device e1000,netdev=n1 -netdev user,id=n1,hostfwd=tcp:127.0.0.1:10022-:22 -nographic"
+tmux send-keys -l "qemu-system-x86_64 -enable-kvm -drive file=/tmp/dfbsd.qcow2,if=ide -m 4G -smp $hncpu -device e1000,netdev=n1 -netdev user,id=n1,hostfwd=tcp:127.0.0.1:10022-:22 -nographic"
 
 # Start the VM.
 tmux send-keys Enter
@@ -131,41 +131,35 @@ ssh-keyscan -p 10022 127.0.0.1 > /root/.ssh/known_hosts
 # Set the VM's nameserver.
 ssh vm "echo 'nameserver 1.1.1.1' > /etc/resolv.conf" 
 
-# Create the host<->VM share folder on host
-mkdir /tmp/share
-
-# Setup SAMBA on the host.
-cat > /usr/local/etc/smb4.conf << 'EOF'
-[global]
-server max protocol = NT1
-server min protocol = NT1
-client max protocol = NT1
-client min protocol = NT1
-
-netbios name = HOST
-
-guest account = root
-map to guest = bad user
-
-server role = standalone
-
-[hostshare]
-path = /tmp/share
-guest ok = yes
-guest only = yes
-force user = root
-writeable = yes
-printable = no
-EOF
-
-# Start SAMBA on the host.
-service samba_server onestart
-
-# Mount the SAMBA host share on the VM.
-hostip=$(ifconfig vtnet0 inet | grep inet | cut -d' ' -f 2)
-ssh vm 'mkdir /mnt/share'
-ssh vm "mount_smbfs -N -I ${hostip} //HOST/hostshare /mnt/share"
-
-kldload fusefs
+modprobe fuse
 mkdir /mnt/vm
 sshfs -o reconnect -o delay_connect vm:/ /mnt/vm
+
+# Setup the rsync server on the VM
+cat >> /mnt/vm/usr/local/etc/rsync/rsyncd.conf << 'EOF'
+[vmshare]
+path = /
+comment = VM root share
+uid = 0
+gid = 0
+read only = no
+list = yes
+EOF
+ssh vm 'service rsyncd onestart'
+
+# Setup the rsync server on the host
+mkdir /tmp/share
+cat >> /etc/rsync/rsyncd.conf << 'EOF'
+[hostshare]
+path = /tmp/share
+comment = host share
+uid = 0
+gid = 0
+read only = no
+list = yes
+EOF
+rsync --daemon
+
+# Add the host IP to the VM 
+hostip=$(ifconfig ens4 | awk '/inet / {print $2}') 
+echo "${hostip} host.vm.run host" >> /mnt/vm/etc/hosts
