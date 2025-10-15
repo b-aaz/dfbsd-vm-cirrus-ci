@@ -3,29 +3,6 @@
 set -e
 set -x
 
-# Splits the string in the first argument to chars each on a line.
-char_split(){
-tmp="$1"
-while [ -n "$tmp" ]
-do
- rest="${tmp#?}"
- first="${tmp%"$rest"}"
- echo "$first"
- tmp="$rest"
-done
-}
-
-# Sends the string in the first argument slowly one char at a time at typing
-# speeds to the tmux window.
-tmux_sendkeys_slow(){
-IFS=$'\n';
-for i in $(char_split "$1")
-do
- tmux send-keys -l "$i"
- sleep .1
-done
-}
-
 # Delete and recreate ssh keys.
 rm -rf /root/.ssh/
 ssh-keygen -q -t ed25519 -N "" -f /root/.ssh/id_ed25519
@@ -40,6 +17,23 @@ EOF
 
 # Compile and install the search binary.
 cc ./.ci/srch.c -o /usr/local/bin/srch
+
+# Compile and install the usleep binary.
+cc ./.ci/usleep.c -o /usr/local/bin/usleep
+
+# Sends the string in the first argument slowly one char at a time at typing
+# speeds to the tmux window.
+tmux_sendkeys_slow(){
+tmp="$1"
+while [ -n "$tmp" ]
+do
+ rest="${tmp#?}"
+ first="${tmp%"$rest"}"
+ tmux send-keys -l "$i"
+ usleep 100000
+ tmp="$rest"
+done
+}
 
 # Installs the required programs.
 apt -y install sshfs net-tools
