@@ -29,7 +29,7 @@ while [ -n "$tmp" ]
 do
  rest="${tmp#?}"
  first="${tmp%"$rest"}"
- tmux send-keys -l "$i"
+ tmux send-keys -l "$first"
  usleep 100000
  tmp="$rest"
 done
